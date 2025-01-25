@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World Contract</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #247b8b;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hello World Contract</h1>
+        <p><strong>Message:</strong> <span id="message">Loading...</span></p>
+        <input type="text" id="newMessage" placeholder="Enter a new message" aria-label="New Message">
+        <button id="updateMessage">Update Message</button>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = "0x8d70edE61e54455fdE2145C637042b194cd0ecaa";
+        const abi = [
+            {
+                "inputs": [],
+                "name": "greeting",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "_greeting",
+                        "type": "string"
+                    }
+                ],
+                "name": "setGreeting",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getGreeting",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        const web3 = new Web3(window.ethereum);
+
+        let contract;
+
+        async function init() {
+            if (!window.ethereum) {
+                alert("MetaMask is not available. Please install MetaMask and try again.");
+                return;
+            }
+
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' }); // Request MetaMask connection
+                const accounts = await web3.eth.getAccounts();
+                console.log("Connected account:", accounts[0]);
+
+                contract = new web3.eth.Contract(abi, contractAddress);
+
+                // Fetch the initial greeting
+                const message = await contract.methods.getGreeting().call();
+                document.getElementById("message").innerText = message;
+            } catch (error) {
+                console.error("Error initializing the contract:", error);
+                alert("Failed to connect to MetaMask or the contract.");
+            }
+        }
+
+        document.getElementById("updateMessage").addEventListener("click", async () => {
+            const newMessage = document.getElementById("newMessage").value.trim();
+            if (!newMessage) {
+                alert("Please enter a new message.");
+                return;
+            }
+
+            try {
+                const accounts = await web3.eth.getAccounts();
+                console.log("Updating message from account:", accounts[0]);
+
+                // Explicitly set gas parameters
+                const gasEstimate = await contract.methods.setGreeting(newMessage).estimateGas({ from: accounts[0] });
+                const gasPrice = await web3.eth.getGasPrice();
+
+                const tx = await contract.methods.setGreeting(newMessage).send({
+                    from: accounts[0],
+                    gas: gasEstimate,
+                    gasPrice: gasPrice,  // Fallback to standard gas pricing if EIP-1559 is unsupported
+                });
+
+                alert("Message updated!");
+
+                const updatedMessage = await contract.methods.getGreeting().call();
+                document.getElementById("message").innerText = updatedMessage;
+            } catch (error) {
+                console.error("Error updating the message:", error);
+                alert("Failed to update the message. Please check the console for details.");
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
