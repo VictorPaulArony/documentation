@@ -1,4 +1,10 @@
 # Ganache CLI
+---
+
+**Hello guys 📢📢**
+for those who are still struggling with how to connect the smart contract to the front end🥶, here is a simple example for you.😌
+In addition to that also those who like to work offline here is your chance to do so🤗
+Happy coding sessions😊👨‍💻👩‍💻🎉
 
 ---
 
